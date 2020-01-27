@@ -13,8 +13,13 @@ class CatalogueController extends AbstractController
 {
     public function catalogo()
     {
+        //Datos de conexión
+        $claveAPI = "G8WR4LSASFVPTNQ96CLQ2GG9J7G4RCC8";
+        $URL = "http://cms.clickcanarias-sandbox.net/prestashop/1.6";
+        $idEmpresa = "3";
+        
         //Conexión con el WebService de Prestashop
-        $webService = new PrestaShopWebservice('http://cms.clickcanarias-sandbox.net/prestashop/1.6', 'G8WR4LSASFVPTNQ96CLQ2GG9J7G4RCC8', false);
+        $webService = new PrestaShopWebservice($URL, $claveAPI, false);
         
         //Recoger los ID de los productos
         $xmlProducts = $webService->get(array('resource' => 'products'));
@@ -23,38 +28,8 @@ class CatalogueController extends AbstractController
         {
             $productId =(int) $product->attributes()->id[0]; 
             array_push($productsId, $productId);
-        }
+        } 
         
-        $algo=$webService->get(array('resource' => 'products', 'id' => "5"));
-        print_r($algo);
-
-        /*foreach($algo as $alg)
-        {
-            $img = $alg->associations->images->image;
-            foreach ($img as $image)
-            {
-                print_r($image->attributes('xlink', true));
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, "G8WR4LSASFVPTNQ96CLQ2GG9J7G4RCC8@cms.clickcanarias-sandbox.net/prestashop/1.6/api/images/products/5/12");
-                curl_setopt($ch, CURLOPT_HEADER, 0);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                $imagen = curl_exec($ch);
-                curl_close($ch);
-                $archivo = @fopen("C:/xampp/htdocs/catalogue/img/5.5.bmp", 'w');
-                if($archivo)
-                {
-                    echo 'La imagen ha sido descargada a';
-                    @fwrite($archivo, $imagen);
-                    @fclose($archivo);
-                }else{
-                    echo 'La imagen  no se ha sido podido descargar';
-                }
-                        }
-            
-           
-        }*/
-        
-        /*
         //Recoger los ID de las categorías
         $xmlCategories = $webService->get(array('resource' => 'categories'));
         $categoriesId = array();
@@ -76,21 +51,83 @@ class CatalogueController extends AbstractController
         $products = array();
         foreach ($productsId as $idProduct)
         {
-            $product = array();
             $xmlInfoProducts = $webService->get(array('resource' => 'products', 'id' => $idProduct));
+            //Buscar en la base de datos si existe el producto
+            $em = $this->getDoctrine()->getManager();
+            $repository = $this->getDoctrine()->getRepository(Products::class);
+            $productoGuadado = $repository->findOneBy(['supplierReference' => $idProduct]);
+            $lastUpdate="";
+            if($productoGuadado)
+            {
+                $lastUpdate = $productoGuadado->getDateUpdate();
+            }
+            
+            if($lastUpdate && $lastUpdate > $xmlInfoProducts->product->date_upd)
+            {
+                var_dump("hellos");
+            }
+            else
+            {
+                var_dump("jujui");
+            }
+            /*
+            $product = array();
             $product['name'] = (string)$xmlInfoProducts->product->name->language[0];
+            $product['supplier_reference'] = $idProduct;
+            $product['supplier_id'] = $idEmpresa;
             $product['description'] = (string)$xmlInfoProducts->product->description->language[0];
-            $product['categories'] = "";
             $product['price'] = (float)$xmlInfoProducts->product->price;
             $product['height'] = (float)$xmlInfoProducts->product->height;
             $product['width'] = (float)$xmlInfoProducts->product->width;
             $product['length'] = (float)$xmlInfoProducts->product->length;
+            $product['date_update'] = $xmlInfoProducts->product->date_upd;
             $product['categories'] = array();
+            
             foreach ($xmlInfoProducts->product->associations->categories->category as $idProductcategories) 
             {
                 array_push($product['categories'], strtolower($categories[(string)$idProductcategories->id]));
             }
+            $product['defaultImage'] = $xmlInfoProducts->product->id_default_image->attributes('xlink', true)->href;
+            $arrayDefImage = explode("//", $product['defaultImage']);
+            $product['defaultImage'] = $arrayDefImage[1];
             array_push($products, $product);
+            
+            // Guardar la imagen por defecto
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $claveAPI."@".$product['defaultImage']);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $imagen = curl_exec($ch);
+            curl_close($ch);
+            $archivo = @fopen("Images/".$idEmpresa."_".$idProduct."_default.jpg", 'w');
+            @fwrite($archivo, $imagen);
+            @fclose($archivo);
+            
+            //guardar imagenes en directorio
+            $img = $xmlInfoProducts->product->associations->images->image;
+            $i=0;
+            foreach ($img as $image)
+            {
+                $i++;
+                $href=(string)$image->attributes('xlink', true)->href;
+                $arrayHref=explode("//", $href);
+                $href = $arrayHref[1];
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $claveAPI."@".$href);
+                curl_setopt($ch, CURLOPT_HEADER, 0);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                $imagen = curl_exec($ch);
+                curl_close($ch);
+                $archivo = @fopen("Images/".$idEmpresa."_".$idProduct."_".$i.".jpg", 'w');
+                if($archivo)
+                {
+                    echo 'La imagen ha sido descargada';
+                    @fwrite($archivo, $imagen);
+                    @fclose($archivo);
+                }else{
+                    echo 'La imagen  no se ha sido podido descargar';
+                }
+            }
         }
         
         //Guardar datos en la base de datos
@@ -100,6 +137,9 @@ class CatalogueController extends AbstractController
             $producto = new Products();
             $producto->setName($infoProduct['name']);
             $producto->setDescription($infoProduct['description']);
+            $producto->setSupplierReference($infoProduct['supplier_reference']);
+            $producto->setSupplierId($infoProduct['supplier_id']);
+            $producto->setDateUpdate($product['date_update']);
             //$producto->setCategories($infoProduct['categories']);
             $producto->setPrice(round($infoProduct['price'], 2));
             $producto->setHeight(round($infoProduct['height'], 2));
@@ -129,8 +169,8 @@ class CatalogueController extends AbstractController
             }
 
             // Generar consulta insert de Product
-            $entityManager->flush();
-        }*/
+            $entityManager->flush();*/
+        }
 
         return new Response(
             '<html><body>Ids recogidos correctamente</body></html>'

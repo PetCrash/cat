@@ -24,10 +24,14 @@ class Products
     private $categories;
     
     /**
-     * @ORM\ManyToMany(targetEntity="Images", inversedBy="Products")
-     * @ORM\JoinTable(name="products_images")
+     * @ORM\Column(type="integer", name="supplier_id")
      */
-    private $images;
+    private $supplierId;
+    
+    /**
+     * @ORM\Column(type="string", length=255, name="supplier_reference")
+     */
+    private $supplierReference;
     
     /**
      * @ORM\Column(type="string", length=255)
@@ -43,6 +47,11 @@ class Products
      * @ORM\Column(type="float")
      */
     private $price;
+    
+    /**
+     * @ORM\Column(type="string", length=255, name="date_update")
+     */
+    private $dateUpdate;
     
     /**
      * @ORM\Column(type="float")
@@ -73,12 +82,16 @@ class Products
         return $this->id;
     }
 
-    function getEntities() {
-        return $this->entities;
+    function getCategories() {
+        return $this->categories;
     }
 
-    function getImages() {
-        return $this->images;
+    function getSupplierId() {
+        return $this->supplierId;
+    }
+
+    function getSupplierReference() {
+        return $this->supplierReference;
     }
 
     function getName() {
@@ -89,12 +102,12 @@ class Products
         return $this->description;
     }
 
-    function getCategories() {
-        return $this->categories;
-    }
-
     function getPrice() {
         return $this->price;
+    }
+
+    function getDateUpdate() {
+        return $this->dateUpdate;
     }
 
     function getHeight() {
@@ -113,12 +126,16 @@ class Products
         $this->id = $id;
     }
 
-    function setEntities($entities) {
-        $this->entities = $entities;
+    function setCategories($categories) {
+        $this->categories = $categories;
     }
 
-    function setImages($images) {
-        $this->images = $images;
+    function setSupplierId($supplierId) {
+        $this->supplierId = $supplierId;
+    }
+
+    function setSupplierReference($supplierReference) {
+        $this->supplierReference = $supplierReference;
     }
 
     function setName($name) {
@@ -129,12 +146,12 @@ class Products
         $this->description = $description;
     }
 
-    function setCategories($categories) {
-        $this->categories = $categories;
-    }
-
     function setPrice($price) {
         $this->price = $price;
+    }
+
+    function setDateUpdate($dateUpdate) {
+        $this->dateUpdate = $dateUpdate;
     }
 
     function setHeight($height) {
@@ -148,4 +165,5 @@ class Products
     function setLength($length) {
         $this->length = $length;
     }
+
 }
