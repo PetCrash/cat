@@ -44,9 +44,19 @@ class Products
     private $description;
     
     /**
+     * @ORM\Column(type="text", name="short_description")
+     */
+    private $shortDescription;
+    
+    /**
      * @ORM\Column(type="float")
      */
     private $price;
+    
+    /**
+     * @ORM\Column(type="float")
+     */
+    private $iva;
     
     /**
      * @ORM\Column(type="string", length=255, name="date_update")
@@ -102,8 +112,16 @@ class Products
         return $this->description;
     }
 
+    function getShortDescription() {
+        return $this->shortDescription;
+    }
+
     function getPrice() {
         return $this->price;
+    }
+
+    function getIva() {
+        return $this->iva;
     }
 
     function getDateUpdate() {
@@ -146,8 +164,16 @@ class Products
         $this->description = $description;
     }
 
+    function setShortDescription($shortDescription) {
+        $this->shortDescription = $shortDescription;
+    }
+
     function setPrice($price) {
         $this->price = $price;
+    }
+
+    function setIva($iva) {
+        $this->iva = $iva;
     }
 
     function setDateUpdate($dateUpdate) {
@@ -165,5 +191,4 @@ class Products
     function setLength($length) {
         $this->length = $length;
     }
-
 }
